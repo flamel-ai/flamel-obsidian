@@ -1,19 +1,19 @@
-# Obsidian community plugin
+# Flamel MDX — Obsidian plugin
 
 ## Project overview
 
-- Target: Obsidian Community Plugin (TypeScript → bundled JavaScript).
-- Entry point: `main.ts` compiled to `main.js` and loaded by Obsidian.
-- Required release artifacts: `main.js`, `manifest.json`, and optional `styles.css`.
+- **What it does**: Renders fumadocs MDX components (`VideoEmbed`, `ThemedImage`, `Mermaid`) inline in Obsidian notes, in both reading view and live preview.
+- **Entry point**: `src/main.ts` → compiled to `main.js` by esbuild.
+- **Release artifacts**: `main.js`, `manifest.json`, `styles.css`.
+- **Plugin ID**: `flamel-mdx`
 
 ## Environment & tooling
 
-- Node.js: use current LTS (Node 18+ recommended).
-- **Package manager: npm** (required for this sample - `package.json` defines npm scripts and dependencies).
-- **Bundler: esbuild** (required for this sample - `esbuild.config.mjs` and build scripts depend on it). Alternative bundlers like Rollup or webpack are acceptable for other projects if they bundle all external dependencies into `main.js`.
-- Types: `obsidian` type definitions.
-
-**Note**: This sample project has specific technical dependencies on npm and esbuild. If you're creating a plugin from scratch, you can choose different tools, but you'll need to replace the build configuration accordingly.
+- **Node.js**: 18+ (LTS recommended)
+- **Package manager**: npm
+- **Bundler**: esbuild (`esbuild.config.mjs`)
+- **Language**: TypeScript with `"strict": true`
+- **Linter**: ESLint with `typescript-eslint` and `eslint-plugin-obsidianmd`
 
 ### Install
 
@@ -21,10 +21,16 @@
 npm install
 ```
 
-### Dev (watch)
+### Dev (watch + hot-reload to vault)
 
 ```bash
 npm run dev
+```
+
+Set `OBSIDIAN_VAULT_PLUGIN_DIR` to auto-copy built files to your vault on each rebuild:
+
+```bash
+OBSIDIAN_VAULT_PLUGIN_DIR="/path/to/vault/.obsidian/plugins/flamel-mdx" npm run dev
 ```
 
 ### Production build
@@ -33,219 +39,192 @@ npm run dev
 npm run build
 ```
 
-## Linting
+### Release
 
-- To use eslint install eslint from terminal: `npm install -g eslint`
-- To use eslint to analyze this project use this command: `eslint main.ts`
-- eslint will then create a report with suggestions for code improvement by file and line number.
-- If your source code is in a folder, such as `src`, you can use eslint with this command to analyze all files in that folder: `eslint ./src/`
+```bash
+npm run release          # patch bump (1.0.0 → 1.0.1)
+npm run release:minor    # minor bump (1.0.0 → 1.1.0)
+npm run release:major    # major bump (1.0.0 → 2.0.0)
+```
+
+This bumps versions in `package.json` and `manifest.json`, commits, tags, and pushes. A GitHub Actions workflow then builds and creates a release with the artifacts attached.
+
+### Lint
+
+```bash
+npm run lint
+```
+
+## Architecture
+
+### Component system
+
+The plugin has a three-layer component architecture:
+
+1. **Schema** (`src/mdx/schema.ts`) — Defines available components, their props (types, required/optional, defaults), and validation rules.
+2. **Registry** (`src/mdx/registry.ts`) — Maps component names to renderer functions. Orchestrates validation → defaults → rendering.
+3. **Renderers** (`src/components/`) — Each component has a dedicated renderer that returns a DOM element.
+
+### Rendering pipeline
+
+Two paths exist for rendering MDX components:
+
+- **Reading view**: `src/mdx/post-processor.ts` — A Markdown post-processor that finds JSX tags in rendered HTML and replaces them with component DOM.
+- **Live preview**: `src/editor/live-preview.ts` — A CodeMirror 6 ViewPlugin that shows inline widget previews while editing.
+
+Both paths use `src/mdx/parser.ts` to extract component names, props, and children from JSX-like syntax.
+
+### Available components
+
+| Component | Description | Required props |
+|-----------|-------------|----------------|
+| `VideoEmbed` | YouTube embed with lazy thumbnail | `id` |
+| `ThemedImage` | Light/dark theme-aware image | `light`, `dark` |
+| `Mermaid` | Mermaid diagram → SVG | `chart` prop or children |
+
+### Commands
+
+| ID | Name | Behavior |
+|----|------|----------|
+| `insert-mdx-component` | Insert component | Opens component picker modal |
+| `insert-themed-image` | Insert themed image | Opens ThemedImage form directly |
+| `insert-video-embed` | Insert video embed | Opens VideoEmbed form directly |
+| `insert-mermaid` | Insert Mermaid diagram | Opens Mermaid form directly |
+
+### Settings
+
+| Setting | Type | Default | Purpose |
+|---------|------|---------|---------|
+| `vaultBasePath` | string | `""` | Base URL for resolving image paths in ThemedImage |
+| `enableLivePreview` | boolean | `true` | Toggle inline previews in edit mode |
 
 ## File & folder conventions
 
-- **Organize code into multiple files**: Split functionality across separate modules rather than putting everything in `main.ts`.
-- Source lives in `src/`. Keep `main.ts` small and focused on plugin lifecycle (loading, unloading, registering commands).
-- **Example file structure**:
-  ```
-  src/
-    main.ts           # Plugin entry point, lifecycle management
-    settings.ts       # Settings interface and defaults
-    commands/         # Command implementations
-      command1.ts
-      command2.ts
-    ui/              # UI components, modals, views
-      modal.ts
-      view.ts
-    utils/           # Utility functions, helpers
-      helpers.ts
-      constants.ts
-    types.ts         # TypeScript interfaces and types
-  ```
-- **Do not commit build artifacts**: Never commit `node_modules/`, `main.js`, or other generated files to version control.
-- Keep the plugin small. Avoid large dependencies. Prefer browser-compatible packages.
-- Generated output should be placed at the plugin root or `dist/` depending on your build setup. Release artifacts must end up at the top level of the plugin folder in the vault (`main.js`, `manifest.json`, `styles.css`).
+```
+src/
+├── main.ts                  # Plugin lifecycle only — keep minimal
+├── settings.ts              # Settings interface, defaults, settings tab
+├── components/              # One file per component renderer
+│   ├── video-embed.ts
+│   ├── themed-image.ts
+│   └── mermaid-diagram.ts
+├── mdx/                     # MDX parsing and rendering infrastructure
+│   ├── parser.ts            # Regex-based JSX parser
+│   ├── registry.ts          # Component name → renderer dispatch
+│   ├── schema.ts            # Component definitions and validation
+│   └── post-processor.ts    # Reading view post-processor
+├── editor/                  # Editor integrations
+│   └── live-preview.ts      # CodeMirror 6 live preview plugin
+└── ui/                      # User-facing modals and icons
+    ├── component-picker.ts  # FuzzySuggestModal for component selection
+    ├── insert-modal.ts      # Form modal for prop input
+    ├── image-suggest.ts     # Vault image file browser
+    └── flamel-icon.ts       # Custom SVG icon registration
+```
+
+- Keep `main.ts` focused on plugin lifecycle. Delegate all feature logic to modules.
+- Each file should have a single responsibility. Split if exceeding ~200-300 lines.
+- Do not commit build artifacts (`main.js`, `node_modules/`).
+
+## Adding a new component
+
+1. Add the component definition to `src/mdx/schema.ts` in the `componentSchema` object.
+2. Create a renderer in `src/components/your-component.ts` that implements `(el, props, children, ctx) => void`.
+3. Register it in `src/main.ts` with `registerComponent("YourComponent", renderYourComponent)`.
+4. Add styles to `styles.css` using the `flamel-mdx-` prefix.
+5. The component will automatically work in reading view, live preview, and the insert modal.
 
 ## Manifest rules (`manifest.json`)
 
-- Must include (non-exhaustive):  
-  - `id` (plugin ID; for local dev it should match the folder name)  
-  - `name`  
-  - `version` (Semantic Versioning `x.y.z`)  
-  - `minAppVersion`  
-  - `description`  
-  - `isDesktopOnly` (boolean)  
-  - Optional: `author`, `authorUrl`, `fundingUrl` (string or map)
-- Never change `id` after release. Treat it as stable API.
-- Keep `minAppVersion` accurate when using newer APIs.
-- Canonical requirements are coded here: https://github.com/obsidianmd/obsidian-releases/blob/master/.github/workflows/validate-plugin-entry.yml
+- `id`: `flamel-mdx` — never change after release.
+- `version`: Semantic Versioning `x.y.z`.
+- `minAppVersion`: Keep accurate when using newer Obsidian APIs.
+- `isDesktopOnly`: `false` — plugin is mobile-compatible.
 
 ## Testing
 
-- Manual install for testing: copy `main.js`, `manifest.json`, `styles.css` (if any) to:
-  ```
-  <Vault>/.obsidian/plugins/<plugin-id>/
-  ```
-- Reload Obsidian and enable the plugin in **Settings → Community plugins**.
+Manual install for testing: copy `main.js`, `manifest.json`, `styles.css` to:
 
-## Commands & settings
+```
+<Vault>/.obsidian/plugins/flamel-mdx/
+```
 
-- Any user-facing commands should be added via `this.addCommand(...)`.
-- If the plugin has configuration, provide a settings tab and sensible defaults.
-- Persist settings using `this.loadData()` / `this.saveData()`.
-- Use stable command IDs; avoid renaming once released.
+Reload Obsidian and enable the plugin in **Settings → Community plugins**.
+
+## Distribution
+
+The plugin is distributed to the team via [BRAT](https://github.com/TfTHacker/obsidian42-brat). Team members install BRAT from the Obsidian community plugin store, then add `flamel-ai/mogadishu-v3` as a beta plugin. BRAT pulls `main.js`, `manifest.json`, and `styles.css` from the latest GitHub release.
 
 ## Versioning & releases
 
-- Bump `version` in `manifest.json` (SemVer) and update `versions.json` to map plugin version → minimum app version.
-- Create a GitHub release whose tag exactly matches `manifest.json`'s `version`. Do not use a leading `v`.
-- Attach `manifest.json`, `main.js`, and `styles.css` (if present) to the release as individual assets.
-- After the initial release, follow the process to add/update your plugin in the community catalog as required.
+Release using the npm scripts:
 
-## Security, privacy, and compliance
+```bash
+npm run release          # patch (1.0.0 → 1.0.1)
+npm run release:minor    # minor (1.0.0 → 1.1.0)
+npm run release:major    # major (1.0.0 → 2.0.0)
+```
 
-Follow Obsidian's **Developer Policies** and **Plugin Guidelines**. In particular:
+This runs `npm version` which:
+1. Bumps `version` in `package.json`
+2. Runs the `version` script to sync `manifest.json` and `versions.json`
+3. Commits and creates a git tag (no `v` prefix)
+4. Pushes the commit and tag
 
-- Default to local/offline operation. Only make network requests when essential to the feature.
-- No hidden telemetry. If you collect optional analytics or call third-party services, require explicit opt-in and document clearly in `README.md` and in settings.
-- Never execute remote code, fetch and eval scripts, or auto-update plugin code outside of normal releases.
-- Minimize scope: read/write only what's necessary inside the vault. Do not access files outside the vault.
-- Clearly disclose any external services used, data sent, and risks.
-- Respect user privacy. Do not collect vault contents, filenames, or personal information unless absolutely necessary and explicitly consented.
-- Avoid deceptive patterns, ads, or spammy notifications.
-- Register and clean up all DOM, app, and interval listeners using the provided `register*` helpers so the plugin unloads safely.
+The `.github/workflows/release.yml` workflow triggers on the tag, builds the plugin, and creates a GitHub release with the three artifacts attached. BRAT users can then check for updates.
 
-## UX & copy guidelines (for UI text, commands, settings)
+## Security & privacy
 
-- Prefer sentence case for headings, buttons, and titles.
-- Use clear, action-oriented imperatives in step-by-step copy.
-- Use **bold** to indicate literal UI labels. Prefer "select" for interactions.
-- Use arrow notation for navigation: **Settings → Community plugins**.
-- Keep in-app strings short, consistent, and free of jargon.
+- No network calls except YouTube thumbnail/iframe loading (user-initiated).
+- YouTube embeds use `youtube-nocookie.com` for privacy.
+- No telemetry or analytics.
+- No remote code execution.
+- Only reads vault files for image path resolution.
 
 ## Performance
 
-- Keep startup light. Defer heavy work until needed.
-- Avoid long-running tasks during `onload`; use lazy initialization.
-- Batch disk access and avoid excessive vault scans.
-- Debounce/throttle expensive operations in response to file system events.
+- Startup is lightweight — component renderers are registered synchronously.
+- Mermaid library is loaded lazily from `window.mermaid` (provided by Obsidian).
+- Live preview uses CodeMirror decorations to avoid re-rendering the entire document.
+- YouTube thumbnails lazy-load; iframes only load on click.
 
 ## Coding conventions
 
-- TypeScript with `"strict": true` preferred.
-- **Keep `main.ts` minimal**: Focus only on plugin lifecycle (onload, onunload, addCommand calls). Delegate all feature logic to separate modules.
-- **Split large files**: If any file exceeds ~200-300 lines, consider breaking it into smaller, focused modules.
-- **Use clear module boundaries**: Each file should have a single, well-defined responsibility.
-- Bundle everything into `main.js` (no unbundled runtime deps).
-- Avoid Node/Electron APIs if you want mobile compatibility; set `isDesktopOnly` accordingly.
-- Prefer `async/await` over promise chains; handle errors gracefully.
-
-## Mobile
-
-- Where feasible, test on iOS and Android.
-- Don't assume desktop-only behavior unless `isDesktopOnly` is `true`.
-- Avoid large in-memory structures; be mindful of memory and storage constraints.
+- TypeScript with `"strict": true`.
+- Bundle everything into `main.js` via esbuild (no unbundled runtime deps).
+- Use `async/await` over promise chains.
+- Use `this.register*` helpers for all cleanup.
+- CSS classes use the `flamel-mdx-` prefix.
+- Command IDs are stable — do not rename once released.
 
 ## Agent do/don't
 
 **Do**
-- Add commands with stable IDs (don't rename once released).
-- Provide defaults and validation in settings.
-- Write idempotent code paths so reload/unload doesn't leak listeners or intervals.
-- Use `this.register*` helpers for everything that needs cleanup.
+- Follow the existing component architecture when adding features.
+- Validate props using the schema system.
+- Handle errors gracefully — show inline error messages rather than crashing.
+- Use the `RenderContext` for theme detection and path resolution.
+- Test in both reading view and live preview.
 
 **Don't**
-- Introduce network calls without an obvious user-facing reason and documentation.
-- Ship features that require cloud services without clear disclosure and explicit opt-in.
-- Store or transmit vault contents unless essential and consented.
-
-## Common tasks
-
-### Organize code across multiple files
-
-**main.ts** (minimal, lifecycle only):
-```ts
-import { Plugin } from "obsidian";
-import { MySettings, DEFAULT_SETTINGS } from "./settings";
-import { registerCommands } from "./commands";
-
-export default class MyPlugin extends Plugin {
-  settings: MySettings;
-
-  async onload() {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
-    registerCommands(this);
-  }
-}
-```
-
-**settings.ts**:
-```ts
-export interface MySettings {
-  enabled: boolean;
-  apiKey: string;
-}
-
-export const DEFAULT_SETTINGS: MySettings = {
-  enabled: true,
-  apiKey: "",
-};
-```
-
-**commands/index.ts**:
-```ts
-import { Plugin } from "obsidian";
-import { doSomething } from "./my-command";
-
-export function registerCommands(plugin: Plugin) {
-  plugin.addCommand({
-    id: "do-something",
-    name: "Do something",
-    callback: () => doSomething(plugin),
-  });
-}
-```
-
-### Add a command
-
-```ts
-this.addCommand({
-  id: "your-command-id",
-  name: "Do the thing",
-  callback: () => this.doTheThing(),
-});
-```
-
-### Persist settings
-
-```ts
-interface MySettings { enabled: boolean }
-const DEFAULT_SETTINGS: MySettings = { enabled: true };
-
-async onload() {
-  this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
-  await this.saveData(this.settings);
-}
-```
-
-### Register listeners safely
-
-```ts
-this.registerEvent(this.app.workspace.on("file-open", f => { /* ... */ }));
-this.registerDomEvent(window, "resize", () => { /* ... */ });
-this.registerInterval(window.setInterval(() => { /* ... */ }, 1000));
-```
+- Add network calls without clear user-facing purpose and documentation.
+- Put feature logic in `main.ts` — delegate to modules.
+- Introduce heavy dependencies — keep the bundle small.
+- Break the existing JSX parsing contract in `parser.ts`.
 
 ## Troubleshooting
 
-- Plugin doesn't load after build: ensure `main.js` and `manifest.json` are at the top level of the plugin folder under `<Vault>/.obsidian/plugins/<plugin-id>/`. 
-- Build issues: if `main.js` is missing, run `npm run build` or `npm run dev` to compile your TypeScript source code.
-- Commands not appearing: verify `addCommand` runs after `onload` and IDs are unique.
-- Settings not persisting: ensure `loadData`/`saveData` are awaited and you re-render the UI after changes.
-- Mobile-only issues: confirm you're not using desktop-only APIs; check `isDesktopOnly` and adjust.
+- **Plugin doesn't load**: Ensure `main.js` and `manifest.json` are at the top level of `<Vault>/.obsidian/plugins/flamel-mdx/`.
+- **Build fails**: Run `npm run build` — check for TypeScript errors.
+- **Components not rendering**: Check the browser console for `[flamel-mdx]` debug messages. Verify JSX syntax matches expected format.
+- **Mermaid not rendering**: Mermaid depends on `window.mermaid` which Obsidian provides. Ensure you're running a recent version of Obsidian.
+- **Images not loading**: Check the "Image base path" setting. Vault-relative paths (starting with `/`) are resolved via Obsidian's resource API.
+- **Live preview not working**: Check the "Live preview" toggle in settings. The CodeMirror extension requires Obsidian's live preview mode to be active.
 
 ## References
 
-- Obsidian sample plugin: https://github.com/obsidianmd/obsidian-sample-plugin
-- API documentation: https://docs.obsidian.md
+- Obsidian plugin API: https://docs.obsidian.md
+- fumadocs: https://fumadocs.vercel.app/
+- Mermaid: https://mermaid.js.org/
 - Developer policies: https://docs.obsidian.md/Developer+policies
 - Plugin guidelines: https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines
-- Style guide: https://help.obsidian.md/style-guide
