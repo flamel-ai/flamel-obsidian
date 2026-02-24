@@ -85,7 +85,7 @@ export default class FlamelMdxPlugin extends Plugin {
 
 		this.addCommand({
 			id: "insert-mermaid",
-			name: "Insert mermaid diagram",
+			name: "Insert Mermaid diagram",
 			editorCallback: (editor: Editor) => {
 				new ComponentInsertModal(this.app, "Mermaid", editor).open();
 			},
