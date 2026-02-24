@@ -11,6 +11,9 @@ if you want to view the source, please visit the github repository of this plugi
 
 const prod = (process.argv[2] === "production");
 
+// Vault plugin directory for dev mode hot-reload
+const vaultPluginDir = process.env.OBSIDIAN_VAULT_PLUGIN_DIR || "";
+
 const context = await esbuild.context({
 	banner: {
 		js: banner,
@@ -46,4 +49,22 @@ if (prod) {
 	process.exit(0);
 } else {
 	await context.watch();
+
+	// In dev mode, also copy to vault plugin directory if configured
+	if (vaultPluginDir) {
+		const { copyFileSync } = await import("node:fs");
+		const copyToVault = () => {
+			try {
+				copyFileSync("main.js", `${vaultPluginDir}/main.js`);
+				copyFileSync("styles.css", `${vaultPluginDir}/styles.css`);
+				copyFileSync("manifest.json", `${vaultPluginDir}/manifest.json`);
+				console.log("Copied to vault plugin directory");
+			} catch (e) {
+				console.error("Failed to copy to vault:", e.message);
+			}
+		};
+		// Watch for rebuilds
+		const { watch } = await import("node:fs");
+		watch("main.js", copyToVault);
+	}
 }

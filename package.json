@@ -1,11 +1,11 @@
 {
-	"name": "obsidian-sample-plugin",
+	"name": "flamel-mdx",
 	"version": "1.0.0",
-	"description": "This is a sample plugin for Obsidian (https://obsidian.md)",
+	"description": "MDX component support for fumadocs — renders VideoEmbed, ThemedImage, and Mermaid inline in Obsidian.",
 	"main": "main.js",
 	"type": "module",
 	"scripts": {
-		"dev": "node esbuild.config.mjs",
+		"dev": "OBSIDIAN_VAULT_PLUGIN_DIR=\"$HOME/src/flamel-ai/content/.obsidian/plugins/flamel-mdx\" node esbuild.config.mjs",
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
 		"version": "node version-bump.mjs && git add manifest.json versions.json",
 		"lint": "eslint ."
