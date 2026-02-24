@@ -1,8 +1,238 @@
-/*
+/* Flamel MDX — Component Styles */
 
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
+/* ============================
+   Shared
+   ============================ */
 
-If your plugin does not need CSS, delete this file.
+.flamel-mdx-hidden {
+	display: none;
+}
 
-*/
+.flamel-mdx-component-wrapper {
+	margin: 12px 0;
+}
+
+.flamel-mdx-component-label {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	margin-top: 6px;
+	padding: 2px 8px;
+	font-size: 11px;
+	font-family: var(--font-monospace);
+	color: var(--text-muted);
+	opacity: 0.7;
+	border-radius: 4px;
+	background: var(--background-secondary);
+	width: fit-content;
+}
+
+.flamel-mdx-component-label-name {
+	color: var(--text-accent);
+	font-weight: 600;
+}
+
+.flamel-mdx-component-label-prop {
+	color: var(--text-faint);
+}
+
+.flamel-mdx-error {
+	padding: 8px 12px;
+	border-radius: 6px;
+	background: var(--background-modifier-error);
+	color: var(--text-error);
+	font-size: 13px;
+	border: 1px solid var(--background-modifier-error);
+}
+
+/* ============================
+   VideoEmbed
+   ============================ */
+
+.flamel-mdx-video-embed {
+	border-radius: 8px;
+	overflow: hidden;
+	border: 1px solid var(--background-modifier-border);
+}
+
+.flamel-mdx-video-thumbnail {
+	position: relative;
+	cursor: pointer;
+	aspect-ratio: 16 / 9;
+	overflow: hidden;
+	background: var(--background-secondary);
+}
+
+.flamel-mdx-video-thumbnail img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	display: block;
+}
+
+.flamel-mdx-video-play {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	opacity: 0.85;
+	transition: opacity 150ms ease, transform 150ms ease;
+}
+
+.flamel-mdx-video-thumbnail:hover .flamel-mdx-video-play {
+	opacity: 1;
+	transform: translate(-50%, -50%) scale(1.08);
+}
+
+.flamel-mdx-video-iframe-container {
+	position: relative;
+	aspect-ratio: 16 / 9;
+}
+
+.flamel-mdx-video-iframe {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	border: none;
+}
+
+.flamel-mdx-video-title {
+	padding: 6px 10px;
+	font-size: 12px;
+	color: var(--text-muted);
+	background: var(--background-secondary);
+}
+
+/* ============================
+   ThemedImage
+   ============================ */
+
+.flamel-mdx-themed-image {
+	border-radius: 8px;
+	overflow: hidden;
+	border: 1px solid var(--background-modifier-border);
+}
+
+.flamel-mdx-themed-image-img {
+	width: 100%;
+	display: block;
+	border-radius: 8px;
+}
+
+.flamel-mdx-image-fallback {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 24px;
+	min-height: 120px;
+	background: var(--background-secondary);
+	color: var(--text-muted);
+}
+
+.flamel-mdx-image-fallback-icon {
+	font-size: 32px;
+	margin-bottom: 8px;
+}
+
+.flamel-mdx-image-fallback-text {
+	font-size: 12px;
+	font-family: var(--font-monospace);
+}
+
+/* ============================
+   Mermaid
+   ============================ */
+
+.flamel-mdx-mermaid {
+	border-radius: 8px;
+	overflow: hidden;
+	border: 1px solid var(--background-modifier-border);
+}
+
+.flamel-mdx-mermaid-diagram {
+	padding: 16px;
+	background: var(--background-primary);
+	text-align: center;
+}
+
+.flamel-mdx-mermaid-svg {
+	display: flex;
+	justify-content: center;
+}
+
+.flamel-mdx-mermaid-svg svg {
+	max-width: 100%;
+	height: auto;
+}
+
+.flamel-mdx-mermaid-loading {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 100px;
+	color: var(--text-muted);
+	font-size: 13px;
+}
+
+.flamel-mdx-mermaid-error {
+	padding: 12px;
+	background: var(--background-modifier-error);
+	border-radius: 6px;
+	margin-bottom: 8px;
+}
+
+.flamel-mdx-mermaid-error-title {
+	font-weight: 600;
+	color: var(--text-error);
+	font-size: 13px;
+}
+
+.flamel-mdx-mermaid-error-detail {
+	margin-top: 4px;
+	font-size: 12px;
+	color: var(--text-muted);
+}
+
+.flamel-mdx-mermaid-fallback {
+	background: var(--background-secondary);
+	padding: 12px;
+	border-radius: 4px;
+	font-size: 12px;
+	overflow-x: auto;
+}
+
+.flamel-mdx-mermaid-fallback code {
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+/* ============================
+   Live Preview
+   ============================ */
+
+.flamel-mdx-live-preview {
+	margin: 4px 0;
+}
+
+/* ============================
+   Insert Modal
+   ============================ */
+
+.flamel-mdx-modal .setting-item {
+	border-top: none;
+	padding: 8px 0;
+}
+
+.flamel-mdx-modal .setting-item-name {
+	font-family: var(--font-monospace);
+	font-size: 13px;
+}
+
+.flamel-mdx-modal-textarea {
+	width: 100% !important;
+	min-width: 300px;
+	font-family: var(--font-monospace);
+	font-size: 12px;
+}

@@ -1,99 +1,121 @@
-import {App, Editor, MarkdownView, Modal, Notice, Plugin} from 'obsidian';
-import {DEFAULT_SETTINGS, MyPluginSettings, SampleSettingTab} from "./settings";
+import {Editor, MarkdownView, Plugin} from "obsidian";
+import {DEFAULT_SETTINGS, FlamelMdxSettings, FlamelMdxSettingTab} from "./settings";
+import {registerComponent, type RenderContext} from "./mdx/registry";
+import {renderVideoEmbed} from "./components/video-embed";
+import {renderThemedImage} from "./components/themed-image";
+import {renderMermaidDiagram} from "./components/mermaid-diagram";
+import {createMdxPostProcessor} from "./mdx/post-processor";
+import {createLivePreviewPlugin} from "./editor/live-preview";
+import {registerFlamelIcon} from "./ui/flamel-icon";
+import {ComponentPickerModal} from "./ui/component-picker";
+import {ComponentInsertModal} from "./ui/insert-modal";
 
-// Remember to rename these classes and interfaces!
-
-export default class MyPlugin extends Plugin {
-	settings: MyPluginSettings;
+export default class FlamelMdxPlugin extends Plugin {
+	settings: FlamelMdxSettings;
 
 	async onload() {
 		await this.loadSettings();
+		console.debug("[flamel-mdx] Plugin loading...");
 
-		// This creates an icon in the left ribbon.
-		this.addRibbonIcon('dice', 'Sample', (evt: MouseEvent) => {
-			// Called when the user clicks the icon.
-			new Notice('This is a notice!');
-		});
+		try {
+			this.registerExtensions(["mdx"], "markdown");
+			console.debug("[flamel-mdx] Registered .mdx extension");
+		} catch (err) {
+			console.error("[flamel-mdx] Failed to register .mdx extension:", err);
+		}
 
-		// This adds a status bar item to the bottom of the app. Does not work on mobile apps.
-		const statusBarItemEl = this.addStatusBarItem();
-		statusBarItemEl.setText('Status bar text');
+		registerComponent("VideoEmbed", renderVideoEmbed);
+		registerComponent("ThemedImage", renderThemedImage);
+		registerComponent("Mermaid", renderMermaidDiagram);
+		console.debug("[flamel-mdx] Registered component renderers");
 
-		// This adds a simple command that can be triggered anywhere
-		this.addCommand({
-			id: 'open-modal-simple',
-			name: 'Open modal (simple)',
-			callback: () => {
-				new SampleModal(this.app).open();
-			}
-		});
-		// This adds an editor command that can perform some operation on the current editor instance
-		this.addCommand({
-			id: 'replace-selected',
-			name: 'Replace selected content',
-			editorCallback: (editor: Editor, view: MarkdownView) => {
-				editor.replaceSelection('Sample editor command');
-			}
-		});
-		// This adds a complex command that can check whether the current state of the app allows execution of the command
-		this.addCommand({
-			id: 'open-modal-complex',
-			name: 'Open modal (complex)',
-			checkCallback: (checking: boolean) => {
-				// Conditions to check
-				const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
-				if (markdownView) {
-					// If checking is true, we're simply "checking" if the command can be run.
-					// If checking is false, then we want to actually perform the operation.
-					if (!checking) {
-						new SampleModal(this.app).open();
-					}
+		try {
+			this.registerMarkdownPostProcessor(
+				createMdxPostProcessor(() => this.getRenderContext())
+			);
+			console.debug("[flamel-mdx] Registered post-processor");
+		} catch (err) {
+			console.error("[flamel-mdx] Failed to register post-processor:", err);
+		}
 
-					// This command will only show up in Command Palette when the check function returns true
-					return true;
-				}
-				return false;
+		try {
+			this.registerEditorExtension(
+				createLivePreviewPlugin(() => this.getRenderContext())
+			);
+			console.debug("[flamel-mdx] Registered live preview extension");
+		} catch (err) {
+			console.error("[flamel-mdx] Failed to register live preview:", err);
+		}
+
+		this.addSettingTab(new FlamelMdxSettingTab(this.app, this));
+
+		// Custom icon + ribbon
+		registerFlamelIcon();
+		this.addRibbonIcon("flamel-flame", "Insert component", () => {
+			const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+			if (view) {
+				new ComponentPickerModal(this.app, view.editor).open();
 			}
 		});
 
-		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.addSettingTab(new SampleSettingTab(this.app, this));
-
-		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
-		// Using this function will automatically remove the event listener when this plugin is disabled.
-		this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
-			new Notice("Click");
+		// Commands
+		this.addCommand({
+			id: "insert-mdx-component",
+			name: "Insert component",
+			editorCallback: (editor: Editor) => {
+				new ComponentPickerModal(this.app, editor).open();
+			},
 		});
 
-		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
-		this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
+		this.addCommand({
+			id: "insert-themed-image",
+			name: "Insert themed image",
+			editorCallback: (editor: Editor) => {
+				new ComponentInsertModal(this.app, "ThemedImage", editor).open();
+			},
+		});
 
+		this.addCommand({
+			id: "insert-video-embed",
+			name: "Insert video embed",
+			editorCallback: (editor: Editor) => {
+				new ComponentInsertModal(this.app, "VideoEmbed", editor).open();
+			},
+		});
+
+		this.addCommand({
+			id: "insert-mermaid",
+			name: "Insert Mermaid diagram",
+			editorCallback: (editor: Editor) => {
+				new ComponentInsertModal(this.app, "Mermaid", editor).open();
+			},
+		});
+
+		console.debug("[flamel-mdx] Plugin loaded successfully");
 	}
 
 	onunload() {
+		// Cleanup handled by Obsidian's register* helpers
+	}
+
+	getRenderContext(): RenderContext {
+		const adapter = this.app.vault.adapter;
+		return {
+			isDarkTheme: document.body.classList.contains("theme-dark"),
+			vaultBasePath: this.settings.vaultBasePath,
+			resolveVaultPath: (path: string) => {
+				// Paths like "/docs/images/foo.webp" → resolve to vault resource URI
+				const vaultPath = path.startsWith("/") ? path.slice(1) : path;
+				return adapter.getResourcePath(vaultPath);
+			},
+		};
 	}
 
 	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData() as Partial<MyPluginSettings>);
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData() as Partial<FlamelMdxSettings>);
 	}
 
 	async saveSettings() {
 		await this.saveData(this.settings);
-	}
-}
-
-class SampleModal extends Modal {
-	constructor(app: App) {
-		super(app);
-	}
-
-	onOpen() {
-		let {contentEl} = this;
-		contentEl.setText('Woah!');
-	}
-
-	onClose() {
-		const {contentEl} = this;
-		contentEl.empty();
 	}
 }
