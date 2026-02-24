@@ -53,6 +53,7 @@ export function renderVideoEmbed(
 			attr: {
 				src: `https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}?autoplay=1`,
 				title: title || "Video",
+				referrerpolicy: "strict-origin-when-cross-origin",
 				allow: "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture",
 				allowfullscreen: "true",
 				frameborder: "0",
