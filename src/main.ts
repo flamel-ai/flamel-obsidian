@@ -15,11 +15,11 @@ export default class FlamelMdxPlugin extends Plugin {
 
 	async onload() {
 		await this.loadSettings();
-		console.log("[flamel-mdx] Plugin loading...");
+		console.debug("[flamel-mdx] Plugin loading...");
 
 		try {
 			this.registerExtensions(["mdx"], "markdown");
-			console.log("[flamel-mdx] Registered .mdx extension");
+			console.debug("[flamel-mdx] Registered .mdx extension");
 		} catch (err) {
 			console.error("[flamel-mdx] Failed to register .mdx extension:", err);
 		}
@@ -27,13 +27,13 @@ export default class FlamelMdxPlugin extends Plugin {
 		registerComponent("VideoEmbed", renderVideoEmbed);
 		registerComponent("ThemedImage", renderThemedImage);
 		registerComponent("Mermaid", renderMermaidDiagram);
-		console.log("[flamel-mdx] Registered component renderers");
+		console.debug("[flamel-mdx] Registered component renderers");
 
 		try {
 			this.registerMarkdownPostProcessor(
 				createMdxPostProcessor(() => this.getRenderContext())
 			);
-			console.log("[flamel-mdx] Registered post-processor");
+			console.debug("[flamel-mdx] Registered post-processor");
 		} catch (err) {
 			console.error("[flamel-mdx] Failed to register post-processor:", err);
 		}
@@ -42,7 +42,7 @@ export default class FlamelMdxPlugin extends Plugin {
 			this.registerEditorExtension(
 				createLivePreviewPlugin(() => this.getRenderContext())
 			);
-			console.log("[flamel-mdx] Registered live preview extension");
+			console.debug("[flamel-mdx] Registered live preview extension");
 		} catch (err) {
 			console.error("[flamel-mdx] Failed to register live preview:", err);
 		}
@@ -51,7 +51,7 @@ export default class FlamelMdxPlugin extends Plugin {
 
 		// Custom icon + ribbon
 		registerFlamelIcon();
-		this.addRibbonIcon("flamel-flame", "Insert MDX Component", () => {
+		this.addRibbonIcon("flamel-flame", "Insert component", () => {
 			const view = this.app.workspace.getActiveViewOfType(MarkdownView);
 			if (view) {
 				new ComponentPickerModal(this.app, view.editor).open();
@@ -61,7 +61,7 @@ export default class FlamelMdxPlugin extends Plugin {
 		// Commands
 		this.addCommand({
 			id: "insert-mdx-component",
-			name: "Insert MDX component",
+			name: "Insert component",
 			editorCallback: (editor: Editor) => {
 				new ComponentPickerModal(this.app, editor).open();
 			},
@@ -69,7 +69,7 @@ export default class FlamelMdxPlugin extends Plugin {
 
 		this.addCommand({
 			id: "insert-themed-image",
-			name: "Insert ThemedImage",
+			name: "Insert themed image",
 			editorCallback: (editor: Editor) => {
 				new ComponentInsertModal(this.app, "ThemedImage", editor).open();
 			},
@@ -77,7 +77,7 @@ export default class FlamelMdxPlugin extends Plugin {
 
 		this.addCommand({
 			id: "insert-video-embed",
-			name: "Insert VideoEmbed",
+			name: "Insert video embed",
 			editorCallback: (editor: Editor) => {
 				new ComponentInsertModal(this.app, "VideoEmbed", editor).open();
 			},
@@ -85,13 +85,13 @@ export default class FlamelMdxPlugin extends Plugin {
 
 		this.addCommand({
 			id: "insert-mermaid",
-			name: "Insert Mermaid",
+			name: "Insert mermaid diagram",
 			editorCallback: (editor: Editor) => {
 				new ComponentInsertModal(this.app, "Mermaid", editor).open();
 			},
 		});
 
-		console.log("[flamel-mdx] Plugin loaded successfully");
+		console.debug("[flamel-mdx] Plugin loaded successfully");
 	}
 
 	onunload() {

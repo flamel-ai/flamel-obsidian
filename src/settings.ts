@@ -23,8 +23,6 @@ export class FlamelMdxSettingTab extends PluginSettingTab {
 		const {containerEl} = this;
 		containerEl.empty();
 
-		containerEl.createEl("h2", {text: "Flamel MDX"});
-
 		new Setting(containerEl)
 			.setName("Image base path")
 			.setDesc(

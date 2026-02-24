@@ -137,8 +137,7 @@ function hideMdxStatements(el: HTMLElement): void {
 	for (const p of Array.from(paragraphs)) {
 		const text = (p.textContent || "").trim();
 		if (MDX_STATEMENT_REGEX.test(text)) {
-			(p as HTMLElement).style.display = "none";
-			(p as HTMLElement).classList.add("flamel-mdx-hidden-statement");
+			(p as HTMLElement).classList.add("flamel-mdx-hidden");
 		}
 	}
 }

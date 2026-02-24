@@ -4,6 +4,10 @@
    Shared
    ============================ */
 
+.flamel-mdx-hidden {
+	display: none;
+}
+
 .flamel-mdx-component-wrapper {
 	margin: 12px 0;
 }

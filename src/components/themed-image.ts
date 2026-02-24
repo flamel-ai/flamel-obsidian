@@ -28,7 +28,7 @@ export function renderThemedImage(
 	});
 
 	img.addEventListener("error", () => {
-		img.style.display = "none";
+		img.classList.add("flamel-mdx-hidden");
 		const fallback = wrapper.createDiv({cls: "flamel-mdx-image-fallback"});
 		fallback.createDiv({cls: "flamel-mdx-image-fallback-icon", text: "🖼️"});
 		fallback.createDiv({
