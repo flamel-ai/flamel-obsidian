@@ -28,6 +28,7 @@ function processHtmlElements(el: HTMLElement, ctx: RenderContext): boolean {
 		videoembed: "VideoEmbed",
 		themedimage: "ThemedImage",
 		mermaid: "Mermaid",
+		iframe: "Iframe",
 	};
 
 	let found = false;

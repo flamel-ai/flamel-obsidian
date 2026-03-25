@@ -42,6 +42,24 @@ export const componentSchema: Record<string, ComponentDef> = {
 			return [];
 		},
 	},
+	Iframe: {
+		description: "Embeds external content via iframe (e.g. Scribe walkthroughs)",
+		props: {
+			src: {type: "string", required: true, description: "URL to embed (must be HTTPS)"},
+			title: {type: "string", default: "Embedded content", description: "Accessible title"},
+			height: {type: "string", default: "640", description: "Height in pixels"},
+		},
+		validate: (props) => {
+			const errors: string[] = [];
+			if (props.src && !props.src.startsWith("https://")) {
+				errors.push("src must be an HTTPS URL");
+			}
+			if (props.height && (!/^\d+$/.test(props.height) || parseInt(props.height) <= 0)) {
+				errors.push("height must be a positive number");
+			}
+			return errors;
+		},
+	},
 };
 
 export function getComponentNames(): string[] {

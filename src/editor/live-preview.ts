@@ -36,6 +36,7 @@ class MdxComponentWidget extends WidgetType {
 			case "VideoEmbed": return 300;
 			case "ThemedImage": return 200;
 			case "Mermaid": return 200;
+			case "Iframe": return 400;
 			default: return 100;
 		}
 	}

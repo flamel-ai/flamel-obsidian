@@ -1,6 +1,6 @@
 # Flamel MDX
 
-An Obsidian plugin that renders [fumadocs](https://fumadocs.vercel.app/) MDX components inline — preview `<VideoEmbed>`, `<ThemedImage>`, and `<Mermaid>` blocks directly in your notes.
+An Obsidian plugin that renders [fumadocs](https://fumadocs.vercel.app/) MDX components inline — preview `<VideoEmbed>`, `<ThemedImage>`, `<Mermaid>`, and `<Iframe>` blocks directly in your notes.
 
 ## What it does
 
@@ -71,6 +71,32 @@ graph TD
 *Either `chart` prop or children content is required.
 
 The diagram automatically adapts to the current Obsidian theme (light or dark).
+
+### Iframe
+
+Embeds external content via an iframe. Useful for embedding interactive walkthroughs from [Scribe](https://scribehow.com/), Google Docs, or any HTTPS source.
+
+```jsx
+<Iframe src="https://scribehow.com/embed/How_to_Do_Something__abc123" />
+```
+
+With all props:
+
+```jsx
+<Iframe
+  src="https://scribehow.com/embed/How_to_Do_Something__abc123"
+  title="How to set up your workspace"
+  height="800"
+/>
+```
+
+| Prop | Required | Default | Description |
+|------|----------|---------|-------------|
+| `src` | Yes | — | URL to embed (must be HTTPS) |
+| `title` | No | `"Embedded content"` | Accessible title for the iframe |
+| `height` | No | `"640"` | Height in pixels |
+
+The iframe is sandboxed for security — it allows scripts, forms, and popups but prevents the embedded content from navigating the parent page. Only HTTPS URLs are accepted.
 
 ## Installation
 
@@ -143,6 +169,7 @@ There are three ways to insert components:
    - `Flamel MDX: Insert themed image` — directly opens the ThemedImage form
    - `Flamel MDX: Insert video embed` — directly opens the VideoEmbed form
    - `Flamel MDX: Insert Mermaid diagram` — directly opens the Mermaid form
+   - `Flamel MDX: Insert iframe embed` — directly opens the Iframe form
 3. **Type it manually** — Write the JSX tag directly in your note. The plugin will render it automatically.
 
 ### Component picker
@@ -211,7 +238,8 @@ src/
 ├── components/
 │   ├── video-embed.ts       # YouTube video renderer
 │   ├── themed-image.ts      # Light/dark image renderer
-│   └── mermaid-diagram.ts   # Mermaid diagram renderer
+│   ├── mermaid-diagram.ts   # Mermaid diagram renderer
+│   └── iframe.ts            # Iframe embed renderer
 ├── mdx/
 │   ├── parser.ts            # JSX component parser
 │   ├── registry.ts          # Component renderer registry
