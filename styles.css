@@ -105,6 +105,30 @@
 }
 
 /* ============================
+   Iframe
+   ============================ */
+
+.flamel-mdx-iframe {
+	border-radius: 8px;
+	overflow: hidden;
+	border: 1px solid var(--background-modifier-border);
+}
+
+.flamel-mdx-iframe-el {
+	display: block;
+	width: 100%;
+	border: none;
+	background: var(--background-secondary);
+}
+
+.flamel-mdx-iframe-title {
+	padding: 6px 10px;
+	font-size: 12px;
+	color: var(--text-muted);
+	background: var(--background-secondary);
+}
+
+/* ============================
    ThemedImage
    ============================ */
 

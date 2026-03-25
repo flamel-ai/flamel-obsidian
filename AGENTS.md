@@ -2,7 +2,7 @@
 
 ## Project overview
 
-- **What it does**: Renders fumadocs MDX components (`VideoEmbed`, `ThemedImage`, `Mermaid`) inline in Obsidian notes, in both reading view and live preview.
+- **What it does**: Renders fumadocs MDX components (`VideoEmbed`, `ThemedImage`, `Mermaid`, `Iframe`) inline in Obsidian notes, in both reading view and live preview.
 - **Entry point**: `src/main.ts` → compiled to `main.js` by esbuild.
 - **Release artifacts**: `main.js`, `manifest.json`, `styles.css`.
 - **Plugin ID**: `flamel-mdx`
@@ -81,6 +81,7 @@ Both paths use `src/mdx/parser.ts` to extract component names, props, and childr
 | `VideoEmbed` | YouTube embed with lazy thumbnail | `id` |
 | `ThemedImage` | Light/dark theme-aware image | `light`, `dark` |
 | `Mermaid` | Mermaid diagram → SVG | `chart` prop or children |
+| `Iframe` | Sandboxed iframe embed (e.g. Scribe) | `src` |
 
 ### Commands
 
@@ -90,6 +91,7 @@ Both paths use `src/mdx/parser.ts` to extract component names, props, and childr
 | `insert-themed-image` | Insert themed image | Opens ThemedImage form directly |
 | `insert-video-embed` | Insert video embed | Opens VideoEmbed form directly |
 | `insert-mermaid` | Insert Mermaid diagram | Opens Mermaid form directly |
+| `insert-iframe` | Insert iframe embed | Opens Iframe form directly |
 
 ### Settings
 
@@ -107,7 +109,8 @@ src/
 ├── components/              # One file per component renderer
 │   ├── video-embed.ts
 │   ├── themed-image.ts
-│   └── mermaid-diagram.ts
+│   ├── mermaid-diagram.ts
+│   └── iframe.ts
 ├── mdx/                     # MDX parsing and rendering infrastructure
 │   ├── parser.ts            # Regex-based JSX parser
 │   ├── registry.ts          # Component name → renderer dispatch
@@ -175,8 +178,9 @@ The `.github/workflows/release.yml` workflow triggers on the tag, builds the plu
 
 ## Security & privacy
 
-- No network calls except YouTube thumbnail/iframe loading (user-initiated).
+- No network calls except YouTube thumbnail/iframe loading and Iframe component embeds (user-initiated).
 - YouTube embeds use `youtube-nocookie.com` for privacy.
+- Iframe embeds are sandboxed and restricted to HTTPS URLs only.
 - No telemetry or analytics.
 - No remote code execution.
 - Only reads vault files for image path resolution.

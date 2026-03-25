@@ -4,6 +4,7 @@ import {registerComponent, type RenderContext} from "./mdx/registry";
 import {renderVideoEmbed} from "./components/video-embed";
 import {renderThemedImage} from "./components/themed-image";
 import {renderMermaidDiagram} from "./components/mermaid-diagram";
+import {renderIframe} from "./components/iframe";
 import {createMdxPostProcessor} from "./mdx/post-processor";
 import {createLivePreviewPlugin} from "./editor/live-preview";
 import {registerFlamelIcon} from "./ui/flamel-icon";
@@ -27,6 +28,7 @@ export default class FlamelMdxPlugin extends Plugin {
 		registerComponent("VideoEmbed", renderVideoEmbed);
 		registerComponent("ThemedImage", renderThemedImage);
 		registerComponent("Mermaid", renderMermaidDiagram);
+		registerComponent("Iframe", renderIframe);
 		console.debug("[flamel-mdx] Registered component renderers");
 
 		try {
@@ -88,6 +90,14 @@ export default class FlamelMdxPlugin extends Plugin {
 			name: "Insert Mermaid diagram",
 			editorCallback: (editor: Editor) => {
 				new ComponentInsertModal(this.app, "Mermaid", editor).open();
+			},
+		});
+
+		this.addCommand({
+			id: "insert-iframe",
+			name: "Insert iframe embed",
+			editorCallback: (editor: Editor) => {
+				new ComponentInsertModal(this.app, "Iframe", editor).open();
 			},
 		});
 
